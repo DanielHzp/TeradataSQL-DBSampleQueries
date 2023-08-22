@@ -1,0 +1,1 @@
+# TeradataSQL-DBSampleQueries
