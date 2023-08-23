@@ -1,5 +1,5 @@
 # TeradataSQL-DBSampleQueries
 
 
-Collection of SQL queries which can be used as a guide to build DCL scripts with teradata-SQL syntax. 
+Collection of SQL scripts which can be used as a guide to build data manipulation queries with teradata-SQL syntax. 
 A sample database is used.
