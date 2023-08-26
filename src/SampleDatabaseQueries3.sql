@@ -4,10 +4,10 @@
 
 
 
---	Total amount of distinct skus that have the brand	“Polo	fas”, and	are	either	size “XXL”	or	“black”	
+--	Total amount of distinct skus that have the brand	“INSERT BRAND NAME”, and	are	either	size “INSERT SIZE”	or	“INSERT COLOR”	
 SELECT	COUNT(DISTINCT	sku)
 FROM	skuinfo
-WHERE	brand	=	'polo	fas'	AND	(color	=	'black'	OR	size	=	'XXL');
+WHERE	brand	=	'INSERT BRAND NAME'	AND	(color	=	'INSERT COLOR'	OR	size	=	'INSERT SIZE');
 
 
 
@@ -411,6 +411,7 @@ FROM
 	HAVING	COUNT(DISTINCT	saledate)>=	20)
 	GROUP	BY	store,	month_num,	year_num
 	HAVING	numdays>=20 QUALIFY	month_rank=12)	as	max_month_table
+	
 			
 GROUP	BY	max_month_table.month_num
 ORDER	BY	max_month_table.month_num;
