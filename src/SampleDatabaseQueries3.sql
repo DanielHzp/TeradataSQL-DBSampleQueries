@@ -17,13 +17,14 @@ WHERE	brand	=	'polo	fas'	AND	(color	=	'black'	OR	size	=	'XXL');
 --City and state in which a store with 11 days (11 days in one of the months of the store) of transactional data was located
 SELECT	DISTINCT	t.store,	s.city,	s.state
 FROM	trnsact	t	JOIN	strinfo	s ON	t.store=s.store
-WHERE	t.store	IN	(SELECT	days_in_month.store
-					FROM
-						(SELECT	EXTRACT(YEAR	from	saledate)	AS	sales_year,	EXTRACT(MONTH	from	saledate)	AS	sales_month,
-						store,	COUNT(DISTINCT		saledate)	as	numdays
+WHERE	t.store	IN	
+(SELECT	days_in_month.store
+FROM
+	(SELECT	EXTRACT(YEAR	from	saledate)	AS	sales_year,	EXTRACT(MONTH	from	saledate)	AS	sales_month,
+	store,	COUNT(DISTINCT	 saledate)	as	numdays
 						
-						FROM	trnsact GROUP	BY	sales_year,	sales_month,	store
-						HAVING	numdays=11)	as	days_in_month)
+	FROM	trnsact GROUP	BY	sales_year,	sales_month,	store
+	HAVING	numdays=11)	as	days_in_month)
 
 
 
@@ -266,15 +267,17 @@ SELECT
 		
 		((December/Dec_numdays)-(November/Nov_numdays))/(November/Nov_numdays)*100	AS	bump
 		
+		
 FROM	trnsact	t	JOIN	strinfo	s ON	t.store=s.store	JOIN	skuinfo	si ON	t.sku=si.sku	JOIN	deptinfo d ON	si.dept=d.dept
 
+
 WHERE	
-			t.stype='P'	and	t.store||EXTRACT(YEAR	from	t.saledate)||EXTRACT(MONTH	from	t.saledate)	IN
+	t.stype='P'	and	t.store||EXTRACT(YEAR	from	t.saledate)||EXTRACT(MONTH	from	t.saledate)	IN
+	(SELECT	store||EXTRACT(YEAR	from	saledate)||EXTRACT(MONTH	from	saledate)
+	FROM	trnsact	
+	GROUP	BY	store,	EXTRACT(YEAR	from	saledate),	EXTRACT(MONTH	from	saledate)
+	HAVING	COUNT(DISTINCT	saledate)>=	20)
 			
-			(SELECT	store||EXTRACT(YEAR	from	saledate)||EXTRACT(MONTH	from	saledate)
-			FROM	trnsact	
-			GROUP	BY	store,	EXTRACT(YEAR	from	saledate),	EXTRACT(MONTH	from	saledate)
-			HAVING	COUNT(DISTINCT	saledate)>=	20)
 			
 GROUP	BY	s.store,	s.city,	s.state,	d.deptdesc
 
@@ -348,16 +351,23 @@ CASE	when	extract(year	from	t.saledate)	=	2005	AND	extract(month	from	t.saledate
 END	as	exclude_flag,
 SUM(case	WHEN	EXTRACT(MONTH	from	saledate)	=	8	then	t.quantity	END)	as	August,
 SUM(case	WHEN	EXTRACT(MONTH	from	saledate)	=	9	then	t.quantity	END)	as	September,	August-September	AS	dip
+
+
 FROM	trnsact	t	JOIN	strinfo	s
 ON	t.store=s.store	JOIN	skuinfo	si
 ON	t.sku=si.sku	JOIN	deptinfo	d
 ON	si.dept=d.dept
+
+
 WHERE	t.stype='P'	AND	exclude_flag	IS	NULL	AND
 t.store||EXTRACT(YEAR	from	t.saledate)||EXTRACT(MONTH	from	t.saledate)	IN
+
 (SELECT	store||EXTRACT(YEAR	from	saledate)||EXTRACT(MONTH	from	saledate)
 FROM	trnsact
 GROUP	BY	store,	EXTRACT(YEAR	from	saledate),	EXTRACT(MONTH	from	saledate)
 HAVING	COUNT(DISTINCT	saledate)>=	20)
+
+
 GROUP	BY	s.city,	s.state,	d.deptdesc,	t.store,	exclude_flag
 ORDER	BY	dip	DESC;
 
@@ -388,19 +398,19 @@ max_month_table.month_num	=	11	then	'November' when
 max_month_table.month_num	=	12	then	'December' END,	COUNT(*)
 
 FROM	
-			(SELECT	DISTINCT	extract(year	from	saledate)	as	year_num,	extract(month	from	saledate)	as	month_num,	
-			CASE	when	extract(year	from	saledate)	=	2005	AND	extract(month	from	saledate)	=	8	then	exclude	END	as	exclude_flag,	
-			store,	SUM(amt)	AS	tot_sales,	COUNT	(DISTINCT	saledate)	as	numdays,		
-			tot_sales/numdays	as	dailyrev, ROW_NUMBER ()	over (PARTITION	BY	store	ORDER	BY	dailyrev	DESC)	AS	month_rank
-			
-			FROM	trnsact
-			WHERE	stype='P'	AND	exclude_flag	IS	NULL	AND	store||EXTRACT(YEAR	from			saledate)||EXTRACT(MONTH	from	
-			saledate)	IN (SELECT	store||EXTRACT(YEAR	from	saledate)||EXTRACT(MONTH	from	saledate)
-			FROM	trnsact	
-			GROUP	BY	store,	EXTRACT(YEAR	from	saledate),	EXTRACT(MONTH	from	saledate)
-			HAVING	COUNT(DISTINCT	saledate)>=	20)
-			GROUP	BY	store,	month_num,	year_num
-			HAVING	numdays>=20 QUALIFY	month_rank=12)	as	max_month_table
+	(SELECT	DISTINCT	extract(year	from	saledate)	as	year_num,	extract(month	from	saledate)	as	month_num,	
+	CASE	when	extract(year	from	saledate)	=	2005	AND	extract(month	from	saledate)	=	8	then	exclude	END	as	exclude_flag,	
+	store,	SUM(amt)	AS	tot_sales,	COUNT	(DISTINCT	saledate)	as	numdays,		
+	tot_sales/numdays	as	dailyrev, ROW_NUMBER ()	over (PARTITION	BY	store	ORDER	BY	dailyrev	DESC)	AS	month_rank
+	
+	FROM	trnsact
+	WHERE	stype='P'	AND	exclude_flag	IS	NULL	AND	store||EXTRACT(YEAR	from			saledate)||EXTRACT(MONTH	from	
+	saledate)	IN (SELECT	store||EXTRACT(YEAR	from	saledate)||EXTRACT(MONTH	from	saledate)
+	FROM	trnsact	
+	GROUP	BY	store,	EXTRACT(YEAR	from	saledate),	EXTRACT(MONTH	from	saledate)
+	HAVING	COUNT(DISTINCT	saledate)>=	20)
+	GROUP	BY	store,	month_num,	year_num
+	HAVING	numdays>=20 QUALIFY	month_rank=12)	as	max_month_table
 			
 GROUP	BY	max_month_table.month_num
 ORDER	BY	max_month_table.month_num;
